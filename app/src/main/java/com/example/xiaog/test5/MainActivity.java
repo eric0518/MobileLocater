@@ -47,8 +47,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         context = getApplicationContext();
-        CellLocator cellLocator = readCellLocation(context);
-        Log.d("cell", cellLocator.toJson());
+
+        CellInfoRequester requester = new CellInfoRequester(context);
+        CellLocator cellLocator = requester.readCellInfo();
+        requester.cellInfoReportReportFixRate(5000);
     }
 
     @Override
@@ -104,56 +106,4 @@ public class MainActivity extends AppCompatActivity {
         setText(id, label, number >= 0 ? String.valueOf(number) : "");
     }
 
-    public CellLocator readCellLocation(Context context) {
-
-        Log.d("getjizhaninfo", "started------------------------");
-        //startLocation();
-
-        CellLocator cellLocator = new CellLocator();
-        try {
-            // String mnctype = "gsm";
-            int lac = 0;
-            int cellId = 0;
-            int mcc = 0;
-            int mnc = 0;
-            TelephonyManager mTelephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            int phoneType = mTelephonyManager.getPhoneType();
-            // 返回值MCC + MNC
-            String operator = mTelephonyManager.getNetworkOperator();
-
-            if (operator != null && operator.length() > 3) {
-
-                cellLocator.setMcc(Integer.parseInt(operator.substring(0, 3)));
-                cellLocator.setMnc(Integer.parseInt(operator.substring(3)));
-            }
-
-            // 中国移动和中国联通获取LAC、CID的方式
-            if (phoneType == TelephonyManager.PHONE_TYPE_CDMA) {
-                // mnctype = "cdma";
-                CdmaCellLocation location = (CdmaCellLocation) mTelephonyManager.getCellLocation();
-
-                cellLocator.setLac(location.getNetworkId());
-                cellLocator.setCid(location.getBaseStationId());
-
-            } else if (phoneType == TelephonyManager.PHONE_TYPE_GSM) {
-
-                GsmCellLocation location = null;
-                CellLocation cellLocation = mTelephonyManager.getCellLocation();
-                if (cellLocation != null) {
-                    location = (GsmCellLocation) cellLocation;
-                }
-                if (location != null) {
-                    cellLocator.setLac(location.getLac());
-                    cellLocator.setCid(location.getCid());
-                }
-
-            } else {
-                // mnctype = "none";
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return cellLocator;
-    }
 }

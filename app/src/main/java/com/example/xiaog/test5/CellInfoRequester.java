@@ -7,70 +7,45 @@ import android.telephony.cdma.CdmaCellLocation;
 import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 
-public class CellLocator {
+import java.security.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
-    enum NumberType { Hex, Dec }
+import static java.lang.System.*;
 
-    int cid = 0;
-    int lac = 0;
-    int mcc = 0;
-    int mnc = 0;
-    int rnc = 0;
+public class CellInfoRequester {
 
-    public int getMcc() {
-        return mcc;
+    CellLocator cellLocator = new CellLocator();
+    Context context = null;
+
+    CellInfoRequester(Context context) {
+        this.context = context;
     }
 
-    public int getMnc() {
-        return mnc;
+    public CellLocator readCellInfo() {
+        return readCellLocation(this.context);
     }
 
-    public int getRnc() {
-        return rnc;
+    public void cellInfoReportReportFixRate(int ms) {
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                cellInfoReportReport();
+           }
+         },0,ms);
     }
 
-    public void setMcc(int mcc) {
-        this.mcc = mcc;
+    public void cellInfoReportReport() {
+        CellLocator cellInfo = readCellInfo();
+        Log.d("--->Read cell info :", cellInfo.toJson());
     }
 
-    public void setMnc(int mnc) {
-        this.mnc = mnc;
-    }
-
-    public void setRnc(int rnc) {
-        this.rnc = rnc;
-    }
-
-    public void setLac(int lac) {
-        this.lac = lac;
-    }
-
-    public int getLac() {
-        return lac;
-    }
-
-    public void setCid(int cid) {
-        this.cid = cid;
-    }
-
-    public int getCid() {
-        return cid;
-    }
-
-    public String toJson() {
-        String json = "{" +
-                      "\"cid\":" + cid + "," +
-                      "\"lac\":" + lac + "," +
-                      "\"mcc\":" + mcc + "," +
-                      "\"mnc\":" + mnc + "," +
-                      "\"rnc\":" + rnc+
-                      "}";
-
-        return json;
-    }
-
-    public CellLocator readCellLocation(Context context) {
+    private CellLocator readCellLocation(Context context) {
         CellLocator cellLocator = new CellLocator();
+
         try {
             // String mnctype = "gsm";
             int lac = 0;
