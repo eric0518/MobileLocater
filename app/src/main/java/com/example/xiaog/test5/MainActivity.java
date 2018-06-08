@@ -47,8 +47,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         context = getApplicationContext();
-        getjizhaninfo(context);
-
+        CellLocator cellLocator = readCellLocation(context);
+        Log.d("cell", cellLocator.toJson());
     }
 
     @Override
@@ -104,11 +104,12 @@ public class MainActivity extends AppCompatActivity {
         setText(id, label, number >= 0 ? String.valueOf(number) : "");
     }
 
-    public int[] getjizhaninfo(Context context) {
+    public CellLocator readCellLocation(Context context) {
 
         Log.d("getjizhaninfo", "started------------------------");
-        startLocation();
-        int[] info = new int[4];
+        //startLocation();
+
+        CellLocator cellLocator = new CellLocator();
         try {
             // String mnctype = "gsm";
             int lac = 0;
@@ -122,60 +123,37 @@ public class MainActivity extends AppCompatActivity {
 
             if (operator != null && operator.length() > 3) {
 
-                mcc = Integer.parseInt(operator.substring(0, 3));
-                mnc = Integer.parseInt(operator.substring(3));
+                cellLocator.setMcc(Integer.parseInt(operator.substring(0, 3)));
+                cellLocator.setMnc(Integer.parseInt(operator.substring(3)));
             }
+
             // 中国移动和中国联通获取LAC、CID的方式
             if (phoneType == TelephonyManager.PHONE_TYPE_CDMA) {
                 // mnctype = "cdma";
                 CdmaCellLocation location = (CdmaCellLocation) mTelephonyManager.getCellLocation();
 
-                lac = location.getNetworkId(); // getLac();
-                cellId = location.getBaseStationId(); // getCid();
+                cellLocator.setLac(location.getNetworkId());
+                cellLocator.setCid(location.getBaseStationId());
+
             } else if (phoneType == TelephonyManager.PHONE_TYPE_GSM) {
-                // mnctype = "gsm";
-                // GsmCellLocation location = (GsmCellLocation)
-                // mTelephonyManager
-                // .getCellLocation();
+
                 GsmCellLocation location = null;
                 CellLocation cellLocation = mTelephonyManager.getCellLocation();
                 if (cellLocation != null) {
                     location = (GsmCellLocation) cellLocation;
                 }
                 if (location != null) {
-
-                    lac = location.getLac();
-                    cellId = location.getCid();
+                    cellLocator.setLac(location.getLac());
+                    cellLocator.setCid(location.getCid());
                 }
 
             } else {
                 // mnctype = "none";
             }
-            info[0] = cellId;
-            info[1] = lac;
-            info[2] = mcc;
-            info[3] = mnc;
-
-            Log.d("getjizhaninfo", "started------------------------cid = " + cellId);
-            Log.d("getjizhaninfo", "started------------------------lac = " + lac);
-
-            setText(R.id.lac, R.string.lac, lac);
-            setText(R.id.rnc, R.string.rnc, cellId >= 0 ? cellId >> 16 : -1);
-            setText(R.id.cid, R.string.cid, cellId >= 0 ? cellId & 0xffff : -1);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return info;
-    }
 
-    private void startLocation() {
-        int checkPermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (checkPermission != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-            Log.d("TTTT", "弹出提示");
-            return;
-        } else {
-
-        }
+        return cellLocator;
     }
 }
